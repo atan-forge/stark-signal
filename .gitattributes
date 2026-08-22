@@ -1,0 +1,29 @@
+# Keep repository text deterministic across Windows, Android Studio, GitHub, and CI.
+# The working tree may use Windows tooling, but the repository stores portable LF text.
+* text=auto eol=lf
+
+# Windows command scripts are the one deliberate CRLF exception.
+*.bat text eol=crlf
+
+# Never subject generated, media, model, archive, or package formats to line-ending conversion.
+*.7z binary
+*.aab binary
+*.aar binary
+*.apk binary
+*.bin binary
+*.gif binary
+*.gz binary
+*.ico binary
+*.jar binary
+*.jpeg binary
+*.jpg binary
+*.mp3 binary
+*.mp4 binary
+*.ogg binary
+*.png binary
+*.so binary
+*.tar binary
+*.tgz binary
+*.wav binary
+*.webp binary
+*.zip binary

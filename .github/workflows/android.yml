@@ -1,0 +1,38 @@
+name: Android checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+      - name: Install pinned Android build tools
+        # API 37 is published under the 37.0 package identifier. Keep this
+        # aligned with the SDK package used by the local and CI builds.
+        run: sdkmanager "platforms;android-37.0" "build-tools;37.0.0" "ndk;29.0.14206865" "cmake;4.1.2"
+      - name: Verify source copy
+        shell: bash
+        run: |
+          # Customer-facing copy belongs in Stark Signal Kotlin and Android
+          # resources. Do not apply product copy rules to pinned upstream C++.
+          if grep -R -n --include='*.kt' --include='*.xml' $'\xE2\x80\x94' app/src/main/java app/src/main/res; then exit 1; fi
+          if grep -R -n 'android.permission.INTERNET\|MANAGE_EXTERNAL_STORAGE\|READ_MEDIA_\|READ_EXTERNAL_STORAGE\|WRITE_EXTERNAL_STORAGE\|CAMERA\|ACCESS_.*LOCATION\|READ_CONTACTS\|AD_ID' app/src/main/AndroidManifest.xml; then exit 1; fi
+      - name: Build and test
+        run: ./gradlew testDebugUnitTest lintDebug assembleDebug
+      - name: Verify merged permissions
+        shell: bash
+        run: |
+          manifest="app/build/intermediates/merged_manifests/debug/processDebugManifest/AndroidManifest.xml"
+          if grep -n 'android.permission.INTERNET\|MANAGE_EXTERNAL_STORAGE\|READ_MEDIA_\|READ_EXTERNAL_STORAGE\|WRITE_EXTERNAL_STORAGE\|CAMERA\|ACCESS_.*LOCATION\|READ_CONTACTS\|AD_ID' "$manifest"; then exit 1; fi
